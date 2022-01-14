@@ -34,6 +34,20 @@ SIMDE_DISABLE_UNWANTED_DIAGNOSTICS
 SIMDE_BEGIN_DECLS_
 
 SIMDE_FUNCTION_ATTRIBUTES
+int64_t
+simde_vabsd_s64(int64_t a) {
+  #if defined(SIMDE_ARM_NEON_A64V8_NATIVE) && (!defined(HEDLEY_GCC_VERSION) || HEDLEY_GCC_VERSION_CHECK(9,1,0))
+    return vabsd_s64(a);
+  #else
+    return a < 0 ? -a : a;
+  #endif
+}
+#if defined(SIMDE_ARM_NEON_A64V8_ENABLE_NATIVE_ALIASES)
+  #undef vabsd_s64
+  #define vabsd_s64(a) simde_vabsd_s64(a)
+#endif
+
+SIMDE_FUNCTION_ATTRIBUTES
 simde_float32x2_t
 simde_vabs_f32(simde_float32x2_t a) {
   #if defined(SIMDE_ARM_NEON_A32V7_NATIVE)
@@ -361,7 +375,9 @@ simde_int64x2_t
 simde_vabsq_s64(simde_int64x2_t a) {
   #if defined(SIMDE_ARM_NEON_A64V8_NATIVE)
     return vabsq_s64(a);
-  #elif defined(SIMDE_POWER_ALTIVEC_P8_NATIVE) && !defined(HEDLEY_IBM_VERSION)
+  #elif defined(SIMDE_ARM_NEON_A32V7_NATIVE)
+    return vbslq_s64(vreinterpretq_u64_s64(vshrq_n_s64(a, 63)), vsubq_s64(vdupq_n_s64(0), a), a);
+  #elif defined(SIMDE_POWER_ALTIVEC_P64_NATIVE) && !defined(HEDLEY_IBM_VERSION)
     return vec_abs(a);
   #else
     simde_int64x2_private
